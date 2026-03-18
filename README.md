@@ -4,24 +4,24 @@ An intelligent full-stack web application that generates personalized quizzes an
 
 📌 Overview
 
-This project implements an Adaptive Learning System (ALS) that dynamically adjusts to a student’s performance.
+This project is an Adaptive Learning System (ALS) designed to:
 
-Unlike traditional quiz apps, this system:
+Identify a student’s weak areas
 
-Identifies weak areas
+Generate targeted quiz questions
 
-Generates targeted questions
+Analyze mistakes deeply
 
-Analyzes mistakes deeply
+Provide actionable learning suggestions
 
-Provides actionable learning suggestions
+Unlike traditional quiz apps, this system adapts dynamically based on user performance.
 
 🧠 Key Features
 ✅ 1. AI-Based Quiz Generation
 
-Generates MCQs using Gemini API
+Generates MCQ questions using Gemini API
 
-Customizes questions based on:
+Focuses on:
 
 Topic
 
@@ -29,11 +29,11 @@ Weak areas
 
 Difficulty level
 
-Focuses on conceptual and edge-case questions
+Ensures conceptual and tricky questions
 
 ✅ 2. Smart Performance Analysis
 
-Evaluates user responses
+Evaluates user answers
 
 Identifies:
 
@@ -43,11 +43,11 @@ Mistake patterns
 
 Learning gaps
 
-Produces structured AI feedback
+Generates AI-powered feedback
 
 ✅ 3. Personalized Learning Suggestions
 
-Recommends:
+Suggests:
 
 What to study next
 
@@ -59,20 +59,20 @@ Targeted revision areas
 
 Structured prompt engineering
 
-Enforced JSON output format
+JSON output enforcement
 
-Regex-based response parsing
+Regex-based parsing
 
-Fallback handling for API failures
+Fallback logic if API fails
 
 ✅ 5. Full-Stack Implementation
 
-Frontend: React.js
+Frontend: React
 
-Backend: Flask (Python)
+Backend: Flask
 
-AI Integration: Gemini API
----------------------------------------------------------------------------------------------
+AI: Gemini API
+
 🏗️ System Architecture
 Frontend (React)
         ↓
@@ -83,9 +83,8 @@ Backend API (Flask)
 |  Performance Analyzer (LLM)    |
 |  Weakness Detection Engine     |
 ----------------------------------
-
-----------------------------------------------------------------------------------------------
-
+        ↓
+User Data (In-Memory / DB)
 ⚙️ Tech Stack
 Layer	Technology
 Frontend	React.js
@@ -93,21 +92,20 @@ Backend	Flask (Python)
 AI/ML	Gemini API
 Parsing	Regex + JSON
 Deployment	Render + Vercel
-
-------------------------------------------------------------------------------------------
-
 🔌 API Endpoints
 📥 Generate Quiz
-
 POST /generate-quiz
 
-Request
+Request:
+
 {
   "topic": "Python OOP",
   "weakAreas": "inheritance, MRO",
   "difficulty": "medium"
 }
-Response
+
+Response:
+
 {
   "questions": [
     {
@@ -119,15 +117,17 @@ Response
   ]
 }
 📤 Submit Quiz
-
 POST /submit-quiz
 
-Request
+Request:
+
 {
   "questions": [...],
   "answers": [...]
 }
-Response
+
+Response:
+
 {
   "score": "3/5",
   "mistakes": [...],
@@ -138,75 +138,77 @@ Response
     "suggestions": [...]
   }
 }
---------------------------------------------------------------------------
 🧠 Core Logic
-🔹 Adaptive Learning Strategy
+🔹 1. Adaptive Learning Approach
 
-Prioritizes weak topics
+Focuses more on weak topics
 
-Reduces repetition of strong areas
+Reduces repetition of strong topics
 
-Maintains balanced difficulty progression
+Ensures balanced learning
 
-🔹 Prompt Engineering
+🔹 2. Prompt Engineering
 
-Designed structured prompts to:
+Used structured prompts to:
 
-Enforce JSON output
+Force JSON output
 
-Reduce hallucinations
+Avoid hallucination
 
-Improve consistency
+Ensure clarity and consistency
 
-🔹 JSON Parsing Strategy
+🔹 3. JSON Parsing Strategy
 
-Handles unreliable LLM outputs using:
+Handled unreliable LLM outputs using:
 
-Regex-based extraction
+Markdown cleanup
 
-Format validation
+Regex extraction
 
-Error handling with retries
+Error handling fallback
 
-🔹 Fallback Mechanism
+🔹 4. Fallback Mechanism
 
-If Gemini API fails:
+If Gemini fails:
 
-Generates fallback questions
+Generates static questions
 
 Provides basic feedback
---------------------------------------------------------------------------
-👉 Ensures system reliability and uptime
 
-⚠️ Challenges & Solutions
-❗ LLM Output Inconsistency
+👉 Ensures system never breaks
 
-Problem: Invalid or malformed JSON
-Solution: Regex extraction + validation + retry logic
+⚠️ Challenges Faced
+❗ 1. LLM Output Inconsistency
 
-❗ API Failures
+Problem: Invalid JSON responses
 
-Problem: API downtime / key issues
-Solution: Fallback quiz generator
+Solution: Regex-based extraction + validation
 
-❗ Prompt Design
+❗ 2. API Failures
 
-Problem: Generic or low-quality outputs
-Solution: Iterative prompt engineering with constraints
-----------------------------------------------------------------------------------------------------------------
+Problem: API key expiry / errors
+
+Solution: Fallback question generator
+
+❗ 3. Prompt Design
+
+Problem: Generic responses
+
+Solution: Iterative prompt engineering
+
 🚀 Future Improvements
 
-🔐 User authentication (JWT)
+🔹 Add user authentication (JWT)
 
-🗄️ Persistent database for user progress
+🔹 Store user progress in database
 
-📊 Advanced adaptive scoring models
+🔹 Implement adaptive scoring model
 
-🧠 NLP models (e.g., BERT) for deeper analysis
+🔹 Use advanced NLP (BERT) for deeper analysis
 
-🏆 Leaderboard & gamification
+🔹 Add leaderboard & gamification
 
-🔁 Spaced repetition learning
+🔹 Introduce spaced repetition learning
 
 🧪 How to Run Locally
 🔹 Backend
@@ -228,9 +230,9 @@ Frontend: Vercel
 💡 What Makes This Project Unique?
 
 ✔ Combines AI + Backend + Product Thinking
-✔ Implements real adaptive learning logic
+✔ Implements adaptive learning logic
 ✔ Handles real-world LLM limitations
-✔ Focuses on learning improvement, not just scoring
+✔ Focuses on user improvement, not just scoring
 
 🧑‍💻 Author
 
@@ -238,4 +240,4 @@ Shashank Soma
 
 ⭐ Final Note
 
-This project demonstrates how Large Language Models can be integrated into real-world systems to build intelligent, adaptive, and user-centric learning applications.
+This project demonstra

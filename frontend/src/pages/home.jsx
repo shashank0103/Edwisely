@@ -11,7 +11,7 @@ function Home() {
 
   const generateQuiz = async () => {
     try {
-      const res = await axios.post("http://localhost:5000/generate-quiz", {
+      const res = await axios.post("https://edwisely-9u5d.onrender.com/generate-quiz", {
         topic,
         weakAreas,
         difficulty,

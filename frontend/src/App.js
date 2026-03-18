@@ -1,38 +1,17 @@
-import React, { useState } from "react";
-import axios from "axios";
-
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./pages/home";
+import Quiz from "./pages/quiz";
+import Result from "./pages/result";
+import "./style.css";
 function App() {
-  const [file, setFile] = useState(null);
-  const [skills, setSkills] = useState([]);
-  const [questions, setQuestions] = useState("");
-
-  const handleUpload = async () => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await axios.post("http://127.0.0.1:5000/upload", formData);
-    setSkills(res.data.skills);
-
-    const q = await axios.post("http://127.0.0.1:5000/generate", {
-      skills: res.data.skills,
-    });
-
-    setQuestions(q.data.questions);
-  };
-
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Resume Analyzer</h2>
-
-      <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-      <button onClick={handleUpload}>Analyze</button>
-
-      <h3>Skills:</h3>
-      <p>{skills.join(", ")}</p>
-
-      <h3>Questions:</h3>
-      <pre>{questions}</pre>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/quiz" element={<Quiz />} />
+        <Route path="/result" element={<Result />} />
+      </Routes>
+    </Router>
   );
 }
 

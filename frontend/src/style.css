@@ -1,0 +1,179 @@
+/* Global */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f6f8;
+  margin: 0;
+}
+
+.container {
+  max-width: 700px;
+  margin: 50px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Headings */
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Inputs */
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Buttons */
+button {
+  padding: 10px 15px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #3b82f6;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background-color: #2563eb;
+}
+
+/* Quiz */
+.question {
+  margin-bottom: 20px;
+}
+
+.option-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  background-color: #e5e7eb;
+  color: black;
+}
+
+.option-btn:hover {
+  background-color: #d1d5db;
+}
+
+/* Result */
+.card {
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.score {
+  background: #eef2ff;
+  text-align: center;
+}
+
+.mistake {
+  background: #fff5f5;
+  border: 1px solid #fca5a5;
+}
+
+.insight {
+  background: #eef6ff;
+}
+
+.suggestion {
+  background: #eaffea;
+}
+
+.center {
+  text-align: center;
+}
+.option-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  background-color: #e5e7eb;
+  color: black;
+}
+
+.option-btn:hover {
+  background-color: #d1d5db;
+}
+
+/* 🔥 NEW */
+.option-btn.selected {
+  background-color: #3b82f6;
+  color: white;
+}
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #f5f7fa;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 30px;
+}
+
+h1, h2 {
+  text-align: center;
+  color: #333;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.score {
+  text-align: center;
+  background: #e3f2fd;
+}
+
+.mistake {
+  border-left: 5px solid red;
+}
+
+.insight {
+  border-left: 5px solid #2196f3;
+}
+
+.suggestion {
+  border-left: 5px solid #4caf50;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 10px 5px;
+  border: none;
+  border-radius: 8px;
+  background: #2196f3;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #1976d2;
+}
+
+.center {
+  text-align: center;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}

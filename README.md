@@ -1,5 +1,5 @@
 .
-https://rainbow-tanuki-0be20d.netlify.app/
+https://sample-blog-100.netlify.app/start
 
 🚀 AI-Powered Adaptive Quiz System
 

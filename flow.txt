@@ -1,0 +1,1370 @@
+EC2 PRACTICAL QUICK REVISION – AWS 
+INTERNAL EXAM
+TASK 1: Amazon Linux EC2 + PuTTY (.ppk)
+Steps:
+1. Go to AWS Console → EC2 → Launch Instance
+2. Select Amazon Linux 2023 AMI
+3. Choose instance type (t2.micro)
+4. Select key pair (.ppk already available)
+5. Configure Security Group:
+Type: SSH
+Port: 22
+Source: My IP
+6. Launch instance
+7. 
+Wait until:
+Instance State: Running
+Status Checks: 2/2 passed
+8. Open PuTTY
+9. Host Name:
+10. ec2-user@Public-DNS
+11. Attach .ppk (Connection → SSH → Auth → Credentials)
+12. Click Open
+13. Verify:
+whoami
+Common Errors & Fix:
+Wrong username → Use ec2-user
+Connection refused → Wait for 2/2 checks
+Authentication failed → Attach correct .ppk
+TASK 2: Ubuntu EC2 + .pem to .ppk Conversion
+Steps:
+1. Launch Instance → Select Ubuntu Server AMI
+2. Download key pair (.pem)
+3. Security Group:
+SSH
+Port 22
+My IP
+4. Launch and wait for 2/2 checks
+5. Open PuTTYgen
+6. Load .pem
+7. 
+Save private key as .ppk
+8. Open PuTTY
+9. Host Name:
+10. ubuntu@Public-DNS
+11. Attach .ppk
+12. Click Open
+13. Verify:
+whoami
+Common Errors & Fix:
+Server sent publickey error → Converted wrong .pem
+Used ec2-user → Use ubuntu
+Key mismatch → Recreate instance
+TASK 3: Connect Using AWS CloudShell
+Steps:
+1. Open AWS Console
+2. Click CloudShell (top-right terminal icon)
+3. Upload .pem file
+4. Run:
+5. chmod 400 key.pem
+6. Connect:
+7. 
+ssh -i key.pem ubuntu@Public-DNS
+8. (Use ec2-user for Amazon Linux)
+9. Verify:
+10. whoami
+Common Errors & Fix:
+No such file → Upload .pem
+Permission denied → Run chmod 400
+Authentication failed → Use correct username
+TASK 4: Windows EC2 + RDP
+Steps:
+1. Launch Instance → Select Windows Server AMI
+2. Choose key pair (.pem)
+3. Configure Security Group:
+Type: RDP
+Port: 3389
+Source: My IP
+4. Launch instance
+5. Wait for Running + 2/2 checks
+6. Select instance → Connect → RDP Client
+7. 
+Click Get Password
+8. Upload same .pem file
+9. Decrypt and copy password
+10. Open Remote Desktop (mstsc)
+11. Computer:
+12. Public IPv4 address
+13. Username:
+14. Administrator
+15. Paste password → Connect
+Common Errors & Fix:
+RDP cannot connect → Port 3389 not open
+Used private IP (172.x.x.x) → Use Public IP
+Password decrypt fails → Upload correct .pem
+Instance not ready → Wait for 2/2 checks
+WEEK-2 QUICK REVISION – EBS & SCALING
+✅
+ TASK 1(a) – Create & Attach EBS Volume
+Steps:
+1. EC2 → Volumes → Create Volume
+2. Choose:
+Type: gp3
+Size: (e.g., 20GB)
+AZ: SAME as EC2
+3. Click Create
+4. Select Volume → Actions → Attach Volume
+5. Choose Instance {having same availability zone as volume}
+6. Device name:
+7. 
+/dev/xvdf
+8. SSH into EC2
+9. Verify:
+10. lsblk
+11. Look for:
+12. nvme1n1
+Common Errors:
+❌
+ Different AZ → Cannot attach
+❌
+ Not visible → Run lsblk
+❌
+ Wrong device assumption → On Nitro shows as nvme1n1
+✅
+ TASK 1(b) – Scale EC2 (Increase CPU & RAM)
+Steps:
+1. EC2 → Instances
+2. Select Instance
+3. Click Stop
+4. After stopped →
+Actions → Instance Settings → Change Instance Type
+5. Select higher type (e.g., t2.medium)
+6. Apply
+7. 
+Start instance
+8. Verify in Details or:
+9. free -m
+Important:
+Must stop before changing type
+Storage (EBS) remains intact
+Public IP may change after stop/start
+✅
+ TASK 2 – Attach & Permanently Mount EBS 
+(Persistence)
+Steps:
+sudo fdisk /dev/nvme1n1
+Inside fdisk:
+n
+p
+Enter
+Enter
+Enter
+w
+Enter
+Then:
+sudo partprobe
+✅
+ Step 5 – Format
+sudo mkfs.xfs /dev/nvme1n1p1
+✅
+ Step 6 – Create Mount Folder
+sudo mkdir /mnt/data
+✅
+ Step 7 – Mount
+sudo mount /dev/nvme1n1p1 /mnt/data
+Check:
+df -h
+cd /mnt/data
+sudo touch f1
+ls
+✅
+ Step 8 – Make Permanent (VERY IMPORTANT)
+Get UUID:
+sudo blkid /dev/nvme1n1p1
+Copy UUID.
+Edit fstab:
+sudo nano /etc/fstab
+Add line:
+UUID=your-uuid /mnt/data xfs defaults,nofail 0 0
+Save(cntl + o)
+enter
+cntl + s
+Test:
+sudo mount -a {meaning no errors}
+✅
+ Step 9 – Reboot Test
+sudo reboot
+After reconnect:
+df -h
+If mounted automatically → Success.
+Important Concepts:
+Manual mount = temporary
+fstab entry = permanent
+Use UUID (not device name)
+If fstab wrong → system may go emergency mode
+✅
+ TASK 3 – Snapshot & Cross-Region Recovery
+Steps:
+1. EC2(stop the instance)
+2. Volumes
+3. Select volume → Actions → Create Snapshot
+4. Wait until Completed
+5. Go to Snapshots
+6. Select snapshot → Copy Snapshot
+7. 
+Choose destination region
+8. Switch region
+9. Create Volume from copied snapshot
+10. Attach volume to EC2(we have to create an ec2 instance in new region)
+11. Mount in Linux
+12. lsblk
+13. mkdir /mnt/data
+14. sudo mount /dev/nvme1n1p1 /mnt/data
+15. cd /mnt/data
+16. ls
+Important Concepts:
+EBS cannot attach across regions directly
+Snapshot required for cross-region
+Snapshot stored in S3
+Used for Backup & Disaster Recovery
+WEEK 3 – AMAZON EFS (ELASTIC FILE SYSTEM)
+Objective:
+Create two EC2 instances, create an EFS file system, mount it on both instances, and verify 
+shared storage.--------------------------------------------------------
+PART 1 – Launch EC2 Instances--------------------------------------------------------
+CREATE A SECURITY GRP (NFS PROTOCOL + ssh in inbound)
+Step 1: Launch First EC2 Instance
+1. Go to AWS Console → EC2 → Launch Instance
+2. Name: EFS-1
+3. AMI: Amazon Linux
+4. Instance Type: t2.micro
+5. Key Pair: Select existing key
+in n/w setting - avail zone add then select exisiting security grp(the nfs one that we created)
+7. Click Launch
+Step 2: Launch Second EC2 Instance
+1. Repeat same configuration but with different avail zone and add security grp
+2. Name: EFS-2
+3. Launch
+Ensure both instances:
+✔
+ Running
+✔
+ 2/2 status checks passed--------------------------------------------------------
+PART 2 – Create EFS File System--------------------------------------------------------
+Step 3: Create EFS
+1. Go to AWS Console → EFS
+then customize->click on next, then select security grp (nfs one) for all avail zones,click on 
+next and finally create.
+Wait until Status = Available
+Important:
+Ensure the attached Security Group allows:
+Type: NFS
+Port: 2049
+Source: EC2 Security Group--------------------------------------------------------
+PART 3 – Mount EFS on EC2 Instances--------------------------------------------------------
+Open two terminals (PuTTY / SSH / CloudShell).
+Step 4: Connect to EFS-1
+ssh -i key.pem ec2-user@<public-ip>
+Switch to root:
+sudo su
+Step 5: Install EFS Utilities
+yum install -y amazon-efs-utils
+yum install -y python3-botocore
+Step 6: Create Mount Directory
+mkdir efs
+sudo mount cmd (copy from efs)
+cd efs
+sudo touch hello.txt
+ls--------------------------------------------------------
+PART 4 – Test Shared Storage--------------------------------------------------------
+Now connect to EFS-2:
+ssh -i key.pem ec2-user@<public-ip>
+sudo su
+yum install -y amazon-efs-utils
+yum python di..
+mkdir efs
+sudo mount -t efs fs-xxxx:/ /efs
+cd efs
+ls
+You should see:
+testfile.txt
+Shared storage is working successfully.--------------------------------------------------------
+Key Concepts--------------------------------------------------------
+• EFS = Shared File Storage
+• Uses NFS protocol
+• Port required = 2049
+• Multiple EC2 instances can access same files
+• Must be in same VPC
+• Controlled using Security Groups--------------------------------------------------------
+Summary Flow--------------------------------------------------------
+Launch EC2 → Create EFS → Configure Security Group → Install efs-utils → mkdir /efs → Mount → 
+Verify → Test shared file
+WEEK 4 – AMAZON S3
+=========================================================
+PART 1 – Create S3 Bucket & Enable Public Access
+=========================================================
+Objective:
+Create an S3 bucket, upload an object, and make it publicly accessible.--------------------------------------------------------
+Step 1 – Create S3 Bucket--------------------------------------------------------
+1. Login to AWS Management Console
+2. Go to Services → S3
+3. Click Create bucket
+4. Enter:- Bucket name: my-public-bucket-123 (must be globally unique)- Region: Choose nearest region
+5. Under Block Public Access:- Uncheck “Block all public access”- Acknowledge warning
+6. Click Create bucket
+--------------------------------------------------------
+Step 2 – Enable Public Access (Bucket Level ACL)--------------------------------------------------------
+1. Open the bucket
+2. Go to Permissions tab
+3. Scroll to Access Control List (ACL)
+4. Click Edit
+5. Under Public access:- Everyone (public access) → Check Read
+6. Save changes--------------------------------------------------------
+Step 3 – Upload Object--------------------------------------------------------
+1. Go to Objects tab
+2. Click Upload
+3. Click Add files
+4. Select file (example: image.jpg)
+5. Click Upload--------------------------------------------------------
+Step 4 – Enable Public Access (Object Level ACL)--------------------------------------------------------
+1. Click uploaded object
+2. Go to Permissions tab
+3. Scroll to Access Control List (ACL)
+4. Click Edit
+5. Under Public access:- Everyone (public access) → Check Read
+6. Save changes--------------------------------------------------------
+Step 5 – Verify Public Access--------------------------------------------------------
+1. Copy Object URL
+2. Open in browser (incognito mode)
+3. File should open without login--------------------------------------------------------
+Key Concept:
+S3 = Object Storage
+Objects are accessed using URL.
+Public access requires:
+• Block Public Access disabled
+• Bucket ACL permission
+• Object ACL permission
+=========================================================
+=========================================================
+PART 2 – S3 Versioning & Cross-Region Replication (CRR)
+=========================================================--------------------------------------------------------
+A) Enable Versioning--------------------------------------------------------
+Step 1:
+1. Open S3
+2. Select bucket
+3. Go to Properties tab
+4. Scroll to Bucket Versioning
+5. Click Edit
+6. Select Enable
+7. Save changes
+Versioning Enabled.--------------------------------------------------------
+Versioning Output Scenario--------------------------------------------------------
+1. Upload report.pdf
+→ Version ID automatically assigned
+2. Re-upload same file (report.pdf)
+→ Old version preserved
+→ New version becomes current
+3. Delete object
+→ Delete marker created
+→ Older versions still available
+Versioning protects against accidental deletion.--------------------------------------------------------
+B) Cross-Region Replication (CRR)--------------------------------------------------------
+Prerequisites:
+• Versioning enabled on BOTH buckets
+• Buckets must be in different regions--------------------------------------------------------
+Step 1 – Create Destination Bucket--------------------------------------------------------
+1. S3 → Create bucket
+2. Bucket name: dest-crr-bucket
+3. Select different region
+4. Create bucket
+5. Enable Versioning
+--------------------------------------------------------
+Step 2 – Create Replication Rule--------------------------------------------------------
+1. Open Source bucket
+2. Go to Management tab
+3. Click Replication rules
+4. Click Create replication rule
+5. Rule name: academy-crr-rule
+6. Status: Enabled
+7. IAM Role: Select labrole (or AWS managed role)
+8. Scope: Apply to all objects--------------------------------------------------------
+Step 3 – Select Destination--------------------------------------------------------
+1. Choose Another bucket
+2. Select destination bucket
+3. Confirm region is different
+4. Save rule
+Replication active.--------------------------------------------------------
+CRR Output Scenario--------------------------------------------------------
+1. Upload image.png in source bucket
+2. Wait few seconds
+3. Open destination bucket
+4. image.png appears automatically
+Replication successful.--------------------------------------------------------
+Key Concept:
+CRR = Disaster Recovery solution
+Replicates objects to another region automatically.
+=========================================================
+=========================================================
+PART 3 – Static Website Hosting in S3
+=========================================================
+Objective:
+Host a static website using S3.
+Files Required:
+• index.html
+• error.html
+--------------------------------------------------------
+Step 1 – Create Bucket--------------------------------------------------------
+1. S3 → Create bucket
+2. Bucket name: my-static-site-bucket-123
+3. Region: Nearest
+4. Disable Block Public Access
+5. Create bucket--------------------------------------------------------
+Step 2 – Upload Website Files--------------------------------------------------------
+1. Open bucket
+2. Go to Objects
+3. Upload:- index.html- error.html--------------------------------------------------------
+Step 3 – Enable Static Website Hosting--------------------------------------------------------
+1. Go to Properties
+2. Scroll to Static website hosting
+3. Click Edit
+4. Select Enable
+5. Choose Host a static website
+6. Index document: index.html
+7. Error document: error.html
+8. Save--------------------------------------------------------
+Step 4 – Enable Bucket-Level Public Access--------------------------------------------------------
+1. Go to Permissions → ACL
+2. Click Edit
+3. Under Public access:- Everyone → Read
+4. Save--------------------------------------------------------
+Step 5 – Enable Object-Level Public Access--------------------------------------------------------
+For index.html and error.html:
+1. Click file
+2. Go to Permissions
+3. Edit ACL
+4. Everyone → Read
+5. Save--------------------------------------------------------
+Step 6 – Access Website
+--------------------------------------------------------
+1. Go to Properties
+2. Copy Bucket Website Endpoint
+Example:
+http://bucket-name.s3-website-region.amazonaws.com
+3. Paste in browser
+4. index.html loads--------------------------------------------------------
+Error Page Test--------------------------------------------------------
+Open:
+http://bucket-name.s3-website-region.amazonaws.com/invalid.html
+Output:
+error.html page displayed.--------------------------------------------------------
+Key Concepts:
+• S3 Static Website = Public content hosting
+• Must disable Block Public Access
+• Must allow Bucket & Object ACL
+• Uses HTTP endpoint
+=========================================================
+FINAL SUMMARY – S3
+S3 = Object Storage
+Versioning = Protect from accidental delete
+CRR = Disaster recovery
+Static Website = Host HTML pages
+ACL = Controls public access
+WEEK 5 – VPC CREATION & EC2 CONNECTION
+Objective:
+Create a custom VPC with public and private subnets, configure routing, and launch EC2 
+instances.
+=========================================================
+PART 1 – Create Custom VPC
+=========================================================
+Step 1 – Create VPC
+1. Go to AWS Console → VPC
+2. Click Create VPC
+3. Select VPC only
+4. Enter:
+Name: Custom-VPC
+IPv4 CIDR: 10.0.0.0/16
+5. Click Create VPC
+Concept:
+CIDR /16 allows up to 65,536 IP addresses.
+=========================================================
+PART 2 – Create Subnets
+=========================================================
+In subnets:
+Public Subnet:
+CIDR: 10.0.1.0/24
+AZ: us-east-1a
+Private Subnet:
+CIDR: 10.0.2.0/24
+AZ: us-east-1a
+Steps:
+1. Go to Subnets → Create subnet
+2. Select Custom-VPC
+3. Choose AZ
+4. Enter CIDR
+5. Create
+Concept:
+Public subnet = internet access
+Private subnet = internal only
+=========================================================
+PART 3 – Create Internet Gateway (IGW)
+=========================================================
+1. Go to Internet Gateways
+2. Click Create
+3. Name: Custom-IGW
+4. Attach to Custom-VPC
+Concept:
+IGW enables internet access for public subnet.
+for 6th) then nat gateway → create nat → give_name ->select vpc u created ->finally create
+now, in route tables, in public r.t ->edit routes ->all zeros in broadcast then internet 
+gateway(give ur internet gateway in edit routes)
+similarly for private route table we add nat
+in ec2, create a security grp, give name as vpc ->select ur vpc , inbound lo ssh,http ->create 
+sec grp
+now another sec grp ->(for nat gateway) inbound ->ssh(10.0.0.0/16 vpc di),ssh(10.0.1.0/24  
+public di)
+now go to ec2 instance ->launch an ec2(name :- public ec2), then in n/w settings (select ur vpc 
+and in subnet public ec2 ki public subnet), auto assign public ip=enable, select sec grp=the 
+one u created for public
+same for private
+now in terminal,
+connect to public-ec2 using ssh
+for exp-5 ping google.com
+for exp-6--->
+scp -i "apem.pem" apem.pem ec2-user@{public-ipv4 add}:/home/ec2-user
+now public ssh connection
+chmod 400 “pemKey”
+now pvt ssh-key
+=========================================================
+PART 4 – Create Route Tables
+=========================================================
+Public Route Table:
+1. Route Tables → Create route table
+2. Select Custom-VPC
+then in subnet associations → public subnet 
+3. Edit Routes
+Destination: 0.0.0.0/0
+Target: Internet Gateway
+4. Associate with Public Subnet
+Private Route Table:
+1. Create route table
+then in subnet associations → private subnet 
+2. Keep only default local route
+3. Associate with Private Subnet
+Concept:
+Public subnet must have route to IGW.
+Private subnet should not.
+=========================================================
+PART 5 – Enable Auto Public IP
+=========================================================
+1. Go to Subnets
+2. Select Public Subnet
+3. Edit subnet settings
+4. Enable Auto-assign Public IPv4
+=========================================================
+PART 6 – Create Security Group
+=========================================================
+1. Go to EC2 → Security Groups
+2. Create new SG
+3. Add inbound rules:
+SSH (22) → My IP
+HTTP (80)
+HTTPS (443)
+4. Save
+=========================================================
+PART 7 – Launch EC2 Instances
+=========================================================
+Public EC2:
+• Select Public Subnet
+• Enable Public IP
+• Attach Public SG
+Private EC2:
+• Select Private Subnet
+• No Public IP
+• Attach appropriate SG
+=========================================================
+PART 8 – Testing
+=========================================================
+Public EC2:
+✔
+ Can access internet
+✔
+ Can be accessed via SSH
+Private EC2:
+✔
+ No direct internet access
+✔
+ Accessible only from public EC2 (if configured)
+=========================================================
+IMPORTANT CONCEPTS
+=========================================================
+VPC = Virtual network
+Subnet = Subdivision of VPC
+IGW = Internet access
+Route Table = Traffic control
+Security Group = Firewall
+Public Subnet Requirements:
+✔
+ IGW attached
+✔
+ Route to 0.0.0.0/0
+✔
+ Public IP enabled
+Private Subnet:
+✔
+ No direct IGW route
+✔
+ Optional NAT Gateway for outbound internet
+=========================================================
+COMMON TROUBLESHOOTING
+=========================================================
+Problem: EC2 cannot access internet
+Check:
+• IGW attached?
+• Route table configured?
+• Public IP assigned?
+• Security group allows traffic?
+Problem: Cannot SSH
+Check:
+• Port 22 open?
+• Correct key pair?
+• Public IP exists?
+=========================================================
+SCENARIO BASED ANSWERS (SHORT FORM)
+=========================================================
+1) Web + DB Design:
+Web server → Public subnet
+Database → Private subnet
+2) Public EC2 no internet:
+Check IGW + route table + public IP
+3) App to RDS:
+Allow SG-to-SG communication on DB port (3306)
+4) CIDR for future scaling:
+Choose larger CIDR like /16
+5) On-prem connectivity:
+VPN (cost-effective)
+Direct Connect (high bandwidth, dedicated)
+6) Same CIDR VPC peering issue:
+Use Transit Gateway + CIDR redesign
+7) Microservices communication:
+Use security groups, not public IP
+8) 3-tier design:
+Public (Web)
+Private (App)
+Private (DB)
+9) Monitor traffic:
+Use VPC Flow Logs
+10) Private subnet no IGW:
+Because it should not be internet-facing
+=======================================================
+SUMMARY FLOW
+========================================================
+Create VPC → Create Subnets → Create IGW → Configure Route Tables → Enable Public IP → 
+Create Security Groups → Launch EC2 → Test Connectivity
+--------------------------------------------------------------------------------------------------------------
+cc internal-2
+📝
+ WEEK-12: IAM USER (GUI + CLI)
+🔹
+ Part A: GUI Access
+➤ Create IAM User
+Login as Root/Admin
+Go to IAM → Users → Create user
+Enter username: S3_Specialist
+Enable Console access (password)
+➤ Assign Permissions
+Select Attach policies directly
+Choose: AmazonS3FullAccess
+➤ Finish Setup
+Click Create user
+Download .csv (login details)
+Note Account ID
+Logout
+➤ Login as IAM User
+Use Sign-in URL
+Enter:
+Account ID
+Username
+Password
+➤ Verification
+EC2 → 
+❌
+ Access Denied
+S3 → 
+✅
+ Bucket creation successful
+🔹
+ Part B: CLI Access
+➤ Generate Access Keys
+IAM → Users → Select user
+Go to Security credentials
+Click Create access key (CLI)
+Download .csv
+➤ Configure CLI
+aws configure
+Enter:
+Access Key
+Secret Key
+Region → ap-south-1
+Output → json
+➤ Verify Commands
+aws s3 ls              → 
+✅
+ Works
+aws s3 mb s3://name    → 
+✅
+ Works
+aws iam list-users     → 
+❌
+ AccessDenied
+aws ec2 describe-instances --region ap-south-1 → 
+❌
+ AccessDenied
+🔥
+ Key Point
+IAM policy controls both GUI & CLI access
+AmazonS3FullAccess → only S3 allowed, others denied
+📝
+ WEEK-13: IAM Role (EC2 + S3 Access, No 
+Keys)
+🔹
+ Part A: Create IAM Role
+➤ Create Role
+IAM → Roles → Create role
+Trusted entity → AWS Service
+Use case → EC2
+➤ Assign Permissions
+Select Attach policies directly
+Choose: AmazonS3FullAccess
+➤ Finalize
+Role name → EC2-S3-Role
+Click Create role
+ 
+ 
+ Part B: Attach Role to EC2
+➤ Attach Role
+Go to EC2 → Instances
+Select running instance
+Actions → Security → Modify IAM role
+Select EC2-S3-Role → Update
+🔹
+ Part C: Verification (Inside EC2)
+aws s3 ls                        → 
+✅
+ Works
+aws ec2 describe-instances       → 
+❌
+ AccessDenied
+🔹
+ Key Points
+No aws configure required
+No Access Keys used
+EC2 gets temporary credentials automatically
+IAM Role permissions apply to instance
+📝
+ WEEK-11: Amazon Lex (Hotel Booking Bot)
+🔹
+ Part A: Create Bot
+➤ Open Lex
+Login AWS Console
+Search Amazon Lex
+Click Create bot
+➤ Create Bot
+Choose Create blank bot
+Name → HotelBookingBot
+IAM Role → Create new role
+Language → English (US)
+Click Done
+🔹
+ Part B: Create Intent
+➤ Create Intent
+Go to Intents
+Click Create intent
+Name → BookHotel
+Click Save
+➤ Add Utterances
+(Add sample user inputs)
+I want to book a hotel
+Book a room
+Reserve hotel
+I need a room
+👉
+ Save intent
+🔹
+ Part C: Add Slots
+➤ Slot 1: Age
+Slot name → age
+Type → AMAZON.Number
+Prompt → “Enter your age”
+Required
+➤ Add Condition
+Go to Advanced options → Slot capture SUCCESS response
+Add condition:
+{age} < 18
+Response:
+You are not eligible for hotel booking
+➤ Slot 2: Location
+Name → location
+Type → AMAZON.City
+Prompt → “Which city do you want?”
+Required
+➤ Slot 3: Check-in Date
+Name → checkin
+Type → AMAZON.Date
+Prompt → “What is your check-in date?”
+Required
+➤ Slot 4: Nights
+Name → nights
+Type → AMAZON.Number
+Prompt → “How many nights will you stay?”
+Required
+🔹
+ Part D: Custom Slot Type (RoomType)
+➤ Create Slot Type
+Fill:
+Click View languages → English (US)
+Go to Slot types
+Click Create slot type
+Name → RoomType
+Values:
+Single
+Double
+Suite
+👉
+ Save
+➤ Use in Intent
+Go to Intents → BookHotel
+Add slot:
+Name → RoomType
+Type → RoomType
+Prompt → “Select room type”
+🔹
+ Part E: Build & Test
+➤ Build
+Click Build
+➤ Test
+Type:
+Book a hotel
+➤ Expected Flow
+Age
+Location
+Date
+Nights
+RoomType
+Final response → Intent fulfilled
+➤ Test Condition
+Age = 15 → 
+❌
+ Not eligible
+Age ≥ 18 → continues flow
+🔹
+ Key Points
+Intent → user goal
+Utterances → user inputs
+Slots → collect data
+Slot types → predefined/custom values
+Condition → logic control
+Build → Test
+🔥
+ Final Concept
+👉
+Lex = Chatbot using Intent + Slots + NLP
+📝
+ WEEK-10: Elastic Beanstalk (Final Practice 
+Steps)
+🔹
+ Part A: Create Environment
+➤ Open Elastic Beanstalk
+Login AWS Console
+Search Elastic Beanstalk
+Click Create environment
+➤ Configure Environment
+Environment tier → Web server environment
+Application name → week-10
+Environment name → week-10-env
+Platform → Node.js
+Application code → Sample application
+Preset → Single instance (free tier)
+👉
+ Click Next
+ 
+ 
+ Part B: Service Access
+➤ Select Roles (Lab setup)
+Service role → LabRole
+EC2 instance profile → LabInstanceProfile
+Key pair → leave empty
+👉
+ Click Next
+🔹
+ Part C: Networking (IMPORTANT)
+VPC → Select default VPC
+Public IP → Enable
+Instance subnets → Select all subnets
+Database → Disabled
+Tags → leave empty
+👉
+ Click Next
+🔹
+ Part D: Instance & Scaling
+Environment type → Single instance
+Instance type → t3.micro (or t2.micro)
+All other settings → default
+👉
+ Click Next
+🔹
+ Part E: Updates & Monitoring
+Do not change anything
+Ensure:
+Managed updates → Disabled
+Logs / X-Ray → Disabled
+👉
+ Click Next / Review
+🔹
+ Part F: Create Environment
+Click Create environment
+🔹
+ Part G: Deployment
+Wait 2–5 minutes
+Status → Ready
+Health → Green
+ 
+ 
+ Part H: Verify Application
+Click environment → copy URL
+Open in browser
+👉
+ Output:
+Sample application page
+🔹
+ Part I: Resources Created
+EC2 instance (1)
+Security group
+Storage (EBS)
+No load balancer
+🔹
+ Part J: Update Application (Theory)
+Go to environment
+Click Upload and Deploy
+Upload new .zip or .war
+Application updates
+🔹
+ Part K: Terminate Environment (VERY IMPORTANT)
+Go to environment
+Click:
+👉
+Actions → Terminate environment
+✔
+ Stops all charges
+🔥
+ Key Points
+EBS = PaaS (Platform as a Service)
+No need to manage EC2 manually
+Single instance → no load balancer
+Upload & Deploy → update app
+📝
+ WEEK-7: Lambda Trigger from S3 → Store in 
+DynamoDB
+ 
+ 
+ Step 1: Create DynamoDB Table
+Fill:
+Go to DynamoDB
+Click Create table
+Table name → week-7
+Partition key → unique (String)
+👉
+ Click Create table
+🔹
+ Step 2: Create S3 Bucket
+Fill:
+Go to S3
+Click Create bucket
+Bucket name → week-7-lambda (or any unique name)
+Region → same as Lambda
+👉
+ Click Create bucket
+🔹
+ Step 3: Create Lambda Function
+Go to Lambda
+Click Create function
+Choose:
+Fill:
+Author from scratch
+Function name → week-7
+Runtime → Python
+Permissions:
+Use existing role → LabRole
+👉
+ Click Create function
+🔹
+ Step 4: Add Code (ZIP method)
+Since editor may not work:
+Create file:
+lambda_function.py
+Paste this code:
+import boto3
+from uuid import uuid4
+def lambda_handler(event, context):
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('week-7')
+for record in event['Records']:
+bucket_name = record['s3']['bucket']['name']
+object_key = record['s3']['object']['key']
+size = record['s3']['object'].get('size', -1)
+event_name = record['eventName']
+event_time = record['eventTime']
+table.put_item(
+Item={
+'unique': str(uuid4()),
+'Bucket': bucket_name,
+'Object': object_key,
+'Size': size,
+'Event': event_name,
+'EventTime': event_time
+}
+)
+return {
+'statusCode': 200
+}
+Zip it:
+lambda_function.zip
+Upload:
+Lambda → Upload from → .zip file
+Upload zip
+ 
+ 
+ Function gets updated
+🔹
+ Step 5: Add S3 Trigger
+In Lambda → Click Add trigger
+Select:
+S3
+Configure:
+Bucket → your bucket
+Event type → All object create events
+👉
+ Click Add
+🔹
+ Step 6: Test the Flow
+Upload file:
+Go to S3 bucket
+Click Upload
+Upload any file
+Check DynamoDB:
+Go to DynamoDB
+Table → week-7
+Click Explore items
+📝
+ WEEK-9: ALB + Auto Scaling (FULL PRACTICE 
+STEPS)
+🔹
+ PART A: Create EC2 Servers (Manual Setup)
+➤ Step 1: Launch EC2 Instance 1
+EC2 → Launch Instance
+Name → webserver-1
+AMI → Amazon Linux
+Instance type → t2.micro
+Network:
+Public IP → Enable
+Security Group:
+SSH (22) → My IP
+HTTP (80) → 0.0.0.0/0
+👉
+ Launch
+➤ Step 2: Connect using SSH (.pem)
+ssh -i your-key.pem ec2-user@YOUR_PUBLIC_IP
+➤ Step 3: Install Apache
+sudo yum update -y
+sudo yum install httpd -y
+sudo systemctl start httpd
+sudo systemctl enable httpd
+echo "This is Server 1" | sudo tee /var/www/html/index.html
+➤ Step 4: Verify
+👉
+ Open browser → paste public IP
+✔
+ Output:
+This is Server 1
+➤ Step 5: Launch EC2 Instance 2
+Repeat same steps:
+Name → webserver-2
+➤ Step 6: Install Apache (Server 2)
+sudo yum update -y
+sudo yum install httpd -y
+sudo systemctl start httpd
+sudo systemctl enable httpd
+echo "This is Server 2" | sudo tee /var/www/html/index.html
+➤ Step 7: Verify
+👉
+ Open Server-2 IP
+✔
+ Output:
+This is Server 2
+🔹
+ PART B: Create Target Group
+➤ Step 8:
+Fill:
+EC2 → Target Groups → Create
+Name → web-servers-tg
+Target type → Instance
+Protocol → HTTP (80)
+👉
+ Next
+➤ Step 9: Register Targets
+Select:
+webserver-1
+webserver-2
+👉
+ Click:
+Include as pending → Register
+🔹
+ PART C: Create Load Balancer (ALB)
+➤ Step 10:
+EC2 → Load Balancers → Create
+Select → Application Load Balancer
+➤ Step 11: Configure
+Name → my-alb
+Scheme → Internet-facing
+Listener → HTTP (80)
+➤ Step 12: Network
+VPC → default
+Subnets → select at least 2
+➤ Step 13: Security Group
+Create/select → lb-sg
+Allow HTTP (80)
+➤ Step 14: Listener routing
+HTTP:80 → Forward to:
+👉
+ web-servers-tg
+➤ Step 15: Create ALB
+👉
+ Click Create
+➤ Step 16: Test Load Balancer
+Copy DNS
+Open in browser
+✔
+ Output switches:
+Server 1 → Server 2 → Server 1
+🔹
+ PART D: Create AMI
+➤ Step 17:
+EC2 → Instances
+Select webserver-1
+👉
+ Actions → Image → Create Image
+Name → my-webserver-ami
+👉
+ Wait until Available
+🔹
+ PART E: Create Launch Template
+➤ Step 18:
+Fill:
+EC2 → Launch Templates → Create
+Name → my-launch-template
+AMI → my-webserver-ami
+Instance type → t2.micro
+Key pair → your key
+IMPORTANT:
+Security Group → select existing (HTTP enabled)
+👉
+ Create
+🔹
+ PART F: Create Auto Scaling Group
+➤ Step 19:
+Fill:
+EC2 → Auto Scaling Groups → Create
+Name → webserver-asg
+Launch template → my-launch-template
+👉
+ Next
+➤ Step 20: Network
+VPC → default
+Subnets → select all
+➤ Step 21: Attach Load Balancer
+Select:
+Attach existing load balancer
+Choose:
+ALB → my-alb
+Target group → web-servers-tg
+Health check:
+ELB
+Grace period → 300 sec
+➤ Step 22: Capacity
+Min = 1
+Desired = 2
+Max = 4
+👉
+ Create ASG
+ 
+ 
+ PART G: Verify Auto Scaling
+➤ Step 23:
+Go to ASG → Instances
+✔
+ 2 instances running
+➤ Step 24: Test Auto Scaling
+👉
+ Terminate one instance
+✅
+ Result:
+ASG automatically creates new instance
+Load balancer continues working
+🔥
+ FINAL FLOW
+User → Load Balancer → Target Group → EC2
+↑
+Auto Scaling
+🧠
+ KEY POINTS (EXAM)
+ALB distributes traffic
+Target group holds servers
+AMI = snapshot
+Launch Template = config
+ASG = auto management
+🔥
+ ONE-LINE MEMORY
+👉
+ALB distributes traffic, ASG maintains instances
+📝
+week-8 COMPLETE STEP-BY-STEP (FINAL 
+PRACTICE)
+🔹
+ PART 1: SNS + EMAIL
+Step 1: Create SNS Topic
+Fill:
+Go to SNS → Topics
+Click Create topic
+Type → Standard
+Name → week-8
+👉
+ Create
+Step 2: Create Email Subscription
+Fill:
+Open topic → Subscriptions
+Click Create subscription
+Protocol → Email
+Endpoint → your email
+👉
+ Create
+Step 3: Confirm Email
+👉
+ Go to Gmail → click Confirm subscription
+Step 4: Test SNS
+Click Publish message
+Send test message
+✔
+ Email received
+🔹
+ PART 2: S3 → SNS
+Step 5: Create S3 Bucket
+Fill:
+Go to S3 → Create bucket
+Name → unique name
+Region → same as SNS
+👉
+ Create
+Step 6: Configure Event Notification
+Fill:
+Open bucket → Properties
+Scroll → Event notifications
+Click → Create
+Event name → UploadEvent
+Event type → All object create events
+Destination → SNS → week-8
+👉
+ Save
+Step 7: Test
+👉
+ Upload file
+✔
+ Email received
+🔹
+ PART 3: SQS (Queue)
+Step 8: Create Queue
+Fill:
+Go to SQS → Create queue
+Type → Standard
+Name → MyS3Queue
+👉
+ Create
+Step 9: Test Queue (optional)
+Send message
+Poll message
+✔
+ Works
+🔹
+ PART 4: SNS → SQS
+Step 10: Subscribe SQS to SNS
+Open SNS topic
+Click Create subscription
+Fill:
+Protocol → SQS
+Endpoint → MyS3Queue
+👉
+ Create
+Step 11: Permissions
+👉
+ Usually auto-added
+If not:
+Allow SNS → SQS in queue policy
+🔹
+ PART 5: TEST BEFORE LAMBDA
+Step 12:
+👉
+ Upload file in S3
+✅
+ Result:
+S3 → SNS → Email 
+✔
+↓
+SQS 
+✔
+Step 13: Check SQS
+Go to queue
+Poll messages
+✔
+ You see event
+🔹
+ PART 6: LAMBDA
+Step 14: Create Lambda
+Fill:
+Go to Lambda → Create
+Name → SQSConsumerFunction
+Runtime → Python
+Role → LabRole
+👉
+ Create
+Step 15: Add Trigger
+Click Add trigger
+Select → SQS
+Choose → MyS3Queue
+👉
+ Add
+Step 16: Add Code
+import json
+def lambda_handler(event, context):
+print("FULL EVENT:")
+print(event)
+for record in event['Records']:
+body = json.loads(record['body'])
+sns_message = json.loads(body['Message'])
+print("Bucket:", sns_message['Records'][0]['s3']['bucket']['name'])
+print("File:", sns_message['Records'][0]['s3']['object']['key'])
+return {
+'statusCode': 200
+}
+👉
+ Click Deploy
+🔹
+ PART 7: FINAL TEST
+Step 17:
+👉
+ Upload file in S3
+🔥
+ FINAL FLOW EXECUTION
+Upload → S3
+↓
+SNS triggered
+↓
+Message → SQS
+↓
+Lambda triggered
+↓
+Logs generated
+Step 18: Check Logs
+Lambda → Monitor → Logs
+✔
+ You see:
+FULL EVENT
+Bucket name
+File name
